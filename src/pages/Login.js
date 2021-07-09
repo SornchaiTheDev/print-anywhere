@@ -15,12 +15,15 @@ import LoginBtn from "../Components/LoginBtn";
 import firebase, { auth, firestore } from "../firebase";
 import Loading from "../Components/Loading";
 import { useUser } from "../Context";
+import { useCookies } from "react-cookie";
 function Login() {
   const history = useHistory();
+  const [cookies, setCookies] = useCookies(["_login"]);
   const [isLoading, setIsLoading] = useState(false);
 
   const CreateUser = async (user) => {
     setIsLoading(true);
+    setCookies("_login", "logined", { path: "/" });
     const getUser = await firestore().collection("users").doc(user.uid).get();
     if (!getUser.exists) {
       await firestore().collection("users").doc(user.uid).set({
@@ -33,6 +36,9 @@ function Login() {
     history.replace("/home");
   };
   useEffect(() => {
+    if (cookies._login === "logined") {
+      history.replace("/home");
+    }
     auth().onAuthStateChanged((user) => {
       if (user !== null) {
         const email = user.email;
@@ -65,22 +71,8 @@ function Login() {
               _cho_kun_
             </IG>
           </Group>
-          <QueueText size={1.25}>กำลังปริ้นท์อยู่ 5 คิว</QueueText>
         </Group>
         <LoginBtn />
-        {/* <InputGroup>
-        <Input
-          placeholder="เลขประจำตัวนักเรียน"
-          type="number"
-          inputMode="numeric"
-        />
-        <Input
-          placeholder="เลขบัตรประจำตัวประชาชน"
-          type="number"
-          inputMode="numeric"
-        />
-        <Button onClick={() => history.push("/home")}>เข้าสู่ระบบ</Button>
-      </InputGroup> */}
       </Container>
     </>
   );

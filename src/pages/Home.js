@@ -14,6 +14,8 @@ import {
   PrintButton,
   Icon,
   Container,
+  WorkStatus,
+  WorkStatusText,
 } from "../Style";
 import { GoSignOut } from "react-icons/go";
 import { AiFillFilePdf, AiFillFileImage } from "react-icons/ai";
@@ -21,23 +23,29 @@ import { AiFillFilePdf, AiFillFileImage } from "react-icons/ai";
 import Loading from "../Components/Loading";
 import { auth, firestore } from "../firebase";
 import { useUser } from "../Context";
+import { useCookies } from "react-cookie";
 
 function Home() {
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(false);
   const [works, setWorks] = useState([]);
-  const { user } = useUser();
-
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     setIsLoading(false);
-  //   }, 2000);
-  // }, []);
+  const [cookies, setCookies, removeCookie] = useCookies(["_login"]);
+  const [user, setUser] = useState(null);
 
   const handleLogout = () => {
     auth()
       .signOut()
-      .then(() => history.replace("/"));
+      .then(() => {
+        removeCookie("_login");
+        history.replace("/");
+      });
+  };
+
+  const getUser = async (uid) => {
+    setIsLoading(true);
+    const doc = await firestore().collection("users").doc(uid).get();
+    setUser((prev) => ({ ...prev, ...doc.data() }));
+    setIsLoading(false);
   };
 
   const getWork = async (uid) => {
@@ -46,11 +54,14 @@ function Home() {
       .collection("users")
       .doc(uid)
       .collection("works")
-      .get();
+      .orderBy("timestamp", "desc")
+      .onSnapshot((snapshot) => {
+        const docs = [];
 
-    const docs = [];
-    works.forEach((doc) => docs.push({ ...doc.data(), id: doc.id }));
-    setWorks(docs);
+        snapshot.forEach((doc) => docs.push({ ...doc.data(), id: doc.id }));
+        setWorks(docs);
+      });
+
     setIsLoading(false);
   };
 
@@ -58,6 +69,7 @@ function Home() {
     auth().onAuthStateChanged((user) => {
       if (user !== null) {
         getWork(user.uid);
+        getUser(user.uid);
       }
     });
   }, []);
@@ -73,7 +85,7 @@ function Home() {
               ฮาโหล!
             </SubText>
             <TitleText color="#83C5BE" weight="bolder">
-              {user.displayName !== undefined ? user.displayName : "กำลังโหลด"}
+              {user !== null && user.name !== null ? user.name : "กำลังโหลด"}
             </TitleText>
           </Group>
 
@@ -85,7 +97,7 @@ function Home() {
         </Group>
 
         <SubText weight="bolder" color="#FE7F2D">
-          {user.quota !== undefined
+          {user !== null && user.quota !== undefined
             ? ` ปริ้นได้อีก ${user.quota} แผ่น`
             : "กำลังโหลด"}
         </SubText>
@@ -98,19 +110,45 @@ function Home() {
           </Group>
           <WorkShowCase>
             {works.length > 0 ? (
-              works.map(({ fileName, id }, index) => (
-                <InvisButton
-                  // onClick={() => history.push(`/print/${id}`)}
+              works.map(({ fileName, status }, index) => (
+                <Group
+                  direction="row"
+                  justify="space-between"
+                  align="center"
+                  width="100%"
                   key={index}
                 >
-                  <Group direction="row" justify="space-between" align="center">
-                    <BodyText weight={500}>{index + 1}.</BodyText>
-                    <BodyText weight={500}>{fileName}</BodyText>
-                    <Icon>
-                      <AiFillFilePdf />
-                    </Icon>
+                  <Group
+                    direction="row"
+                    justify="flex-start"
+                    align="center"
+                    width="100%"
+                  >
+                    <Group
+                      direction="row"
+                      justify="flex-start"
+                      align="center"
+                      width="70%"
+                    >
+                      <BodyText weight={500}>{index + 1}.</BodyText>
+                      <div style={{ width: "70%" }}>
+                        <BodyText weight={500}>{fileName}</BodyText>
+                      </div>
+                      <Icon>
+                        <AiFillFilePdf />
+                      </Icon>
+                    </Group>
+                    <WorkStatus status={status}>
+                      <WorkStatusText>
+                        {status === "wait"
+                          ? "กำลังปริ้นท์"
+                          : status === "inqueue"
+                          ? "รอคิว"
+                          : "เสร็จแล้ว"}
+                      </WorkStatusText>
+                    </WorkStatus>
                   </Group>
-                </InvisButton>
+                </Group>
               ))
             ) : (
               <SubText>ยังไม่มีงาน</SubText>

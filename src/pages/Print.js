@@ -29,16 +29,20 @@ import { v4 as uuidV4 } from "uuid";
 
 function Print() {
   const history = useHistory();
-  const [file, setFile] = useState();
+  const [file, setFile] = useState(null);
   const [previewPDF, setPreviewPDF] = useState();
   const [filePage, setFilePage] = useState(1);
   const [fileAllPage, setFileAllPage] = useState(null);
-  const [pages, setPages] = useState("all");
-  const [type, setType] = useState("A4");
-  const [range, setRange] = useState("all");
-  const [error, setError] = useState(false);
+  const [details, setDetails] = useState({
+    range: "",
+    pages: "all",
+    type: "A4",
+    printform: "border",
+    timetoget: "",
+  });
+
+  const [empty, setEmpty] = useState(false);
   const [isMobile, setisMobile] = useState("mobile");
-  const [timetoget, setTimeToGet] = useState();
   const [isLoading, setIsLoading] = useState(false);
   const { filePath } = useParams();
 
@@ -48,6 +52,18 @@ function Print() {
     const upload = document.getElementById("fileupload");
     upload.click();
   };
+
+  useEffect(() => {
+    //Validate
+    if (
+      (details.pages === "choose" && details.range === "") ||
+      details.timetoget === ""
+    ) {
+      setEmpty(true);
+    } else {
+      setEmpty(false);
+    }
+  }, [details]);
 
   //File View
   const Openfile = async () => {
@@ -64,13 +80,6 @@ function Print() {
     }
   };
 
-  useEffect(() => {
-    console.log(filePath);
-    if (filePath !== undefined) {
-      Openfile();
-    }
-  }, []);
-
   //Device Check
   useEffect(() => {
     const width = window.screen.width;
@@ -80,23 +89,6 @@ function Print() {
       setisMobile(false);
     }
   }, [window]);
-
-  const handleCustomPage = (e) => {
-    const pages = e.target.value;
-    const range = pages.split("-");
-    const isError = /,/g.test(pages);
-    if (isError) {
-      setError(true);
-      return;
-    }
-
-    if (range.length === 1) {
-      setRange(range[0]);
-    } else {
-      setRange(range);
-    }
-    setError(false);
-  };
 
   const handleFileUpload = (e) => {
     const pdf = e.target.files[0];
@@ -120,22 +112,42 @@ function Print() {
 
   const PrintOrder = async () => {
     setIsLoading(true);
-
     //Upload File To Storage
     const whereToStore = storage().ref("Works/");
-    const FileNameSchema = `${new Date().getFullYear()}-${file.name}`;
+    const FileNameSchema = `${uuidV4()}.pdf`;
     const fileName = whereToStore.child(FileNameSchema);
     await fileName.put(file);
     const filePath = await fileName.getDownloadURL();
 
+    // Add time to queue
+    const TimeToGet = new Date();
+    const formTime = details.timetoget.split(":");
+    TimeToGet.setHours(formTime[0], formTime[1]);
+
     //Create Reference to firestore
+    const docRef = uuidV4();
     firestore()
       .collection("users")
       .doc(user.uid)
       .collection("works")
-      .doc(uuidV4())
-      .set({ fileName: file.name, path: filePath, owner: user.displayName });
+      .doc()
+      .set({
+        fileName: file.name,
+        path: filePath,
+        owner: user.displayName,
+        timestamp: firestore.FieldValue.serverTimestamp(),
+        status: "inqueue",
+      });
 
+    // Add to queue
+    firestore().collection("queue").add({
+      order_doc: docRef,
+      path: filePath,
+      owner: user.displayName,
+      details: details,
+      fileName: file.name,
+      orderTime: TimeToGet,
+    });
     //Remove Quota
 
     await firestore()
@@ -225,7 +237,9 @@ function Print() {
           <form>
             <Group direction="row" justify="flex-start" align="center" gap={5}>
               <input
-                onChange={(e) => setPages(e.target.value)}
+                onChange={(e) =>
+                  setDetails((prev) => ({ ...prev, pages: e.target.value }))
+                }
                 type="radio"
                 name="page"
                 value="all"
@@ -235,13 +249,15 @@ function Print() {
             </Group>
             <Group direction="row" justify="flex-start" align="center" gap={14}>
               <input
-                onChange={(e) => setPages(e.target.value)}
+                onChange={(e) =>
+                  setDetails((prev) => ({ ...prev, pages: e.target.value }))
+                }
                 type="radio"
                 name="page"
                 value="choose"
               />
 
-              {pages !== "choose" ? (
+              {details.pages !== "choose" ? (
                 <BodyText weight={600}>เลือกหน้า</BodyText>
               ) : (
                 <Group
@@ -253,9 +269,15 @@ function Print() {
                     <BodyText weight={600}>เลือกหน้า</BodyText>
                   <Group direction="row" justify="space-between" align="center">
                     <Input
-                      error={error}
+                      // error={details.pages === "choose" && details.range === ""}
                       type="text"
-                      onChange={(e) => setRange(e.target.value)}
+                      value={details.range}
+                      onChange={(e) =>
+                        setDetails((prev) => ({
+                          ...prev,
+                          range: e.target.value,
+                        }))
+                      }
                       placeholder="1 , 1-3"
                       type="text"
                       inputMode="numeric"
@@ -275,9 +297,11 @@ function Print() {
             <Group direction="row" justify="flex-start" align="center" gap={5}>
               <input
                 type="radio"
-                onChange={(e) => setType(e.target.value)}
-                name="page"
-                value="a4"
+                onChange={(e) =>
+                  setDetails((prev) => ({ ...prev, type: e.target.value }))
+                }
+                name="type"
+                value="A4"
                 defaultChecked
               />
                 <BodyText weight={600}>A4 ธรรมดา</BodyText>
@@ -285,9 +309,11 @@ function Print() {
             <Group direction="row" justify="flex-start" align="center" gap={5}>
               <input
                 type="radio"
-                onChange={(e) => setType(e.target.value)}
-                name="page"
-                value="cover"
+                value="100pound"
+                onChange={(e) =>
+                  setDetails((prev) => ({ ...prev, type: e.target.value }))
+                }
+                name="type"
               />
                 <BodyText weight={600}>กระดาษปก</BodyText>
             </Group>
@@ -300,9 +326,11 @@ function Print() {
             <Group direction="row" justify="flex-start" align="center" gap={5}>
               <input
                 type="radio"
-                onChange={(e) => setType(e.target.value)}
-                name="page"
-                value="a4"
+                onChange={(e) =>
+                  setDetails((prev) => ({ ...prev, printform: e.target.value }))
+                }
+                name="printform"
+                value="border"
                 defaultChecked
               />
                 <BodyText weight={600}>มีขอบ</BodyText>
@@ -310,9 +338,11 @@ function Print() {
             <Group direction="row" justify="flex-start" align="center" gap={5}>
               <input
                 type="radio"
-                onChange={(e) => setType(e.target.value)}
-                name="page"
-                value="cover"
+                onChange={(e) =>
+                  setDetails((prev) => ({ ...prev, printform: e.target.value }))
+                }
+                name="printform"
+                value="borderless"
               />
                 <BodyText weight={600}>ไร้ขอบ</BodyText>
             </Group>
@@ -327,15 +357,19 @@ function Print() {
           <form>
             <div style={{ width: 200, marginTop: 20 }}>
               <Input
-                type="text"
-                placeholder="12:34"
-                value={timetoget}
-                onChange={(e) => setTimeToGet(e.target.value)}
+                // error={details.timetoget === ""}
+                type="time"
+                value={details.timetoget}
+                onChange={(e) =>
+                  setDetails((prev) => ({ ...prev, timetoget: e.target.value }))
+                }
               />
             </div>
           </form>
         </Section>
-        <PrintButton onClick={PrintOrder}>ตกลง</PrintButton>
+        <PrintButton disabled={empty} onClick={PrintOrder}>
+          ตกลง
+        </PrintButton>
       </HomeContainer>
     </>
   );

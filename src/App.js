@@ -11,20 +11,23 @@ import Print from "./pages/Print";
 import Success from "./pages/Success";
 import PrivateRoute from "./Components/PrivateRoute";
 import UserContext from "./Context";
+import { CookiesProvider } from "react-cookie";
 function App() {
   return (
-    <UserContext>
-      <Router>
-        <Switch>
-          <Route path="/" exact component={Login} />
-          <PrivateRoute path="/home" exact component={Home} />
-          <PrivateRoute path="/order" exact component={Print} />
-          <PrivateRoute path="/success" exact component={Success} />
-          <PrivateRoute path="/print/:filePath" exact component={Print} />
-          <Redirect to="/" />
-        </Switch>
-      </Router>
-    </UserContext>
+    <CookiesProvider>
+      <UserContext>
+        <Router>
+          <Switch>
+            <Route path="/" exact component={Login} />
+            <PrivateRoute path="/home" exact component={Home} />
+            <PrivateRoute path="/order" exact component={Print} />
+            <PrivateRoute path="/success" exact component={Success} />
+            <PrivateRoute path="/print/:filePath" exact component={Print} />
+            <Redirect to="/" />
+          </Switch>
+        </Router>
+      </UserContext>
+    </CookiesProvider>
   );
 }
 

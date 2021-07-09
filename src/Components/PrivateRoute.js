@@ -1,14 +1,19 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Route, Redirect } from "react-router-dom";
-import { useUser } from "../Context";
+
+import { useCookies } from "react-cookie";
 function PrivateRoute({ component: Component, ...rest }) {
-  const { user } = useUser();
+  const [cookies] = useCookies(["_login"]);
 
   return (
     <Route
       {...rest}
       render={(props) =>
-        user !== null ? <Component {...props} /> : <Redirect to="/" />
+        cookies._login === "logined" ? (
+          <Component {...props} />
+        ) : (
+          <Redirect to="/" />
+        )
       }
     />
   );

@@ -40,6 +40,7 @@ export const BodyText = styled.h2`
   color: ${(props) => (props.color ? props.color : "#08090A")};
   font-family: Athiti;
   font-weight: ${(props) => (props.weight ? props.weight : "normal")};
+  word-wrap: break-word;
 `;
 
 export const InputGroup = styled.div`
@@ -170,6 +171,28 @@ export const WorkShowCase = styled.div`
   gap: 10px;
 `;
 
+export const WorkStatus = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30%;
+  background: ${(props) =>
+    props.status
+      ? props.status === "wait"
+        ? "#FE7F2D"
+        : props.status === "inqueue"
+        ? "lightgrey"
+        : "#83c5be"
+      : "#83c5be"};
+  border-radius: 20px;
+  padding: 10px;
+`;
+
+export const WorkStatusText = styled.h5`
+  font-size: 1 rem;
+  color: white;
+`;
+
 export const PrintButton = styled.button`
   cursor: pointer;
   position: fixed;
@@ -183,7 +206,7 @@ export const PrintButton = styled.button`
   font-weight: 600;
   font-size: 1.25rem;
   color: white;
-  background: #83c5be;
+  background: ${(props) => (props.disabled ? "lightgrey" : "#83c5be")};
   display: flex;
   justify-content: center;
   align-items: center;
