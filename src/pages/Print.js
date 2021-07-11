@@ -18,6 +18,7 @@ import {
   ArrowBtn,
   Icon,
 } from "../Style";
+// import { Document, Page } from "react-pdf/dist/esm/entry.webpack";
 import { Document, Page } from "react-pdf/dist/esm/entry.webpack";
 
 import { FaArrowLeft, FaAngleLeft, FaAngleRight } from "react-icons/fa";
@@ -38,13 +39,18 @@ function Print() {
     pages: "all",
     type: "A4",
     printform: "border",
-    timetoget: "",
+    timetoget: `${(new Date().getHours() + 2)
+      .toString()
+      .padStart(2, 0)}:${new Date().getMinutes().toString().padStart(2, 0)}`,
   });
+
+  useEffect(() => {
+    console.log(details);
+  }, [details]);
 
   const [empty, setEmpty] = useState(false);
   const [isMobile, setisMobile] = useState("mobile");
   const [isLoading, setIsLoading] = useState(false);
-  const { filePath } = useParams();
 
   const { user, removeQuota } = useUser();
 
@@ -52,6 +58,10 @@ function Print() {
     const upload = document.getElementById("fileupload");
     upload.click();
   };
+
+  useEffect(() => {
+    if (user === null) history.replace("/home");
+  }, [user]);
 
   useEffect(() => {
     //Validate
@@ -64,21 +74,6 @@ function Print() {
       setEmpty(false);
     }
   }, [details]);
-
-  //File View
-  const Openfile = async () => {
-    const getFile = await firestore()
-      .collection("users")
-      .doc(user.uid)
-      .collection("works")
-      .doc(filePath)
-      .get();
-    if (getFile.exists) {
-      setPreviewPDF(getFile.data().path);
-    } else {
-      history.replace("/home");
-    }
-  };
 
   //Device Check
   useEffect(() => {
@@ -130,7 +125,7 @@ function Print() {
       .collection("users")
       .doc(user.uid)
       .collection("works")
-      .doc()
+      .doc(docRef)
       .set({
         fileName: file.name,
         path: filePath,
@@ -144,6 +139,7 @@ function Print() {
       order_doc: docRef,
       path: filePath,
       owner: user.displayName,
+      ownerDoc: user.uid,
       details: details,
       fileName: file.name,
       orderTime: TimeToGet,
@@ -280,7 +276,6 @@ function Print() {
                       }
                       placeholder="1 , 1-3"
                       type="text"
-                      inputMode="numeric"
                     />
                   </Group>
                 </Group>

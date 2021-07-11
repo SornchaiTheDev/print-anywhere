@@ -27,10 +27,12 @@ import { useCookies } from "react-cookie";
 
 function Home() {
   const history = useHistory();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [works, setWorks] = useState([]);
   const [cookies, setCookies, removeCookie] = useCookies(["_login"]);
   const [user, setUser] = useState(null);
+  const [isOutOfQuota, setIsOutOfQuota] = useState(true);
+  const { setQuota } = useUser();
 
   const handleLogout = () => {
     auth()
@@ -45,6 +47,8 @@ function Home() {
     setIsLoading(true);
     const doc = await firestore().collection("users").doc(uid).get();
     setUser((prev) => ({ ...prev, ...doc.data() }));
+    setQuota(doc.data().quota);
+
     setIsLoading(false);
   };
 
@@ -73,6 +77,14 @@ function Home() {
       }
     });
   }, []);
+
+  //Check out of quota
+  useEffect(() => {
+    if (user !== null && user.quota <= 0) {
+      setIsOutOfQuota(true);
+    }
+    if (user !== null && user.quota > 0) setIsOutOfQuota(false);
+  }, [user]);
 
   return (
     <>
@@ -128,15 +140,13 @@ function Home() {
                       direction="row"
                       justify="flex-start"
                       align="center"
-                      width="70%"
+                      width="100%"
                     >
                       <BodyText weight={500}>{index + 1}.</BodyText>
-                      <div style={{ width: "70%" }}>
-                        <BodyText weight={500}>{fileName}</BodyText>
-                      </div>
-                      <Icon>
-                        <AiFillFilePdf />
-                      </Icon>
+
+                      <BodyText weight={500}>
+                        {fileName.slice(0, 20)} {fileName.length > 20 && "..."}
+                      </BodyText>
                     </Group>
                     <WorkStatus status={status}>
                       <WorkStatusText>
@@ -144,7 +154,7 @@ function Home() {
                           ? "กำลังปริ้นท์"
                           : status === "inqueue"
                           ? "รอคิว"
-                          : "เสร็จแล้ว"}
+                          : "ไปรับได้เลย"}
                       </WorkStatusText>
                     </WorkStatus>
                   </Group>
@@ -157,7 +167,10 @@ function Home() {
         </Section>
       </HomeContainer>
 
-      <PrintButton onClick={() => history.push("/order")}>
+      <PrintButton
+        disabled={isOutOfQuota}
+        onClick={() => history.push("/order")}
+      >
         สั่งปริ้นท์
       </PrintButton>
     </>

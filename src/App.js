@@ -22,7 +22,7 @@ function App() {
             <PrivateRoute path="/home" exact component={Home} />
             <PrivateRoute path="/order" exact component={Print} />
             <PrivateRoute path="/success" exact component={Success} />
-            <PrivateRoute path="/print/:filePath" exact component={Print} />
+            {/* <PrivateRoute path="/print/:filePath" exact component={Print} /> */}
             <Redirect to="/" />
           </Switch>
         </Router>

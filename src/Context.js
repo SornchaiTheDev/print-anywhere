@@ -10,6 +10,9 @@ function Context({ children }) {
   const removeQuota = () =>
     setUser((prev) => ({ ...prev, quota: prev.quota - 1 }));
 
+  const setQuota = (quota) => {
+    setUser((prev) => ({ ...prev, quota }));
+  };
   useEffect(() => {
     auth().onAuthStateChanged((user) => {
       if (user !== null) {
@@ -19,6 +22,8 @@ function Context({ children }) {
   }, []);
   const value = {
     user,
+    setUser,
+    setQuota,
     removeQuota,
   };
   return <User.Provider value={value}>{children}</User.Provider>;

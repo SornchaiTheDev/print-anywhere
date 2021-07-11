@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 export const Container = styled.div`
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   padding-top: ${(props) => (props.marginTop ? props.marginTop : 0)}px;
   display: flex;
   justify-content: ${(props) => (props.justify ? props.justify : "center")};
@@ -59,6 +59,25 @@ export const Input = styled.input`
   border: 1px solid ${(props) => (props.error ? "red" : "lightgrey")};
   border-radius: 6px;
   padding: 10px;
+  color: #292f36;
+  font-size: 16px;
+  font-family: Athiti;
+  font-weight: 500;
+  ::placeholder {
+    color: lightgrey;
+  }
+  :focus {
+    border: 1px solid ${(props) => (props.error ? "red" : "#006d77")};
+  }
+`;
+
+export const Time = styled.input`
+  width: 70%;
+  background: none;
+  outline: none;
+  border: 1px solid ${(props) => (props.error ? "red" : "lightgrey")};
+  border-radius: 6px;
+  padding: 20px;
   color: #292f36;
   font-size: 16px;
   font-family: Athiti;
@@ -165,17 +184,23 @@ export const WorkBox = styled.div`
 export const WorkShowCase = styled.div`
   margin-top: 20px;
   display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
   flex-direction: column;
   gap: 10px;
 `;
 
 export const WorkStatus = styled.div`
   display: flex;
+  font-family: Athiti;
   justify-content: center;
   align-items: center;
   width: 30%;
+  @media (min-width: 928px) {
+    width: 10%;
+  }
+
   background: ${(props) =>
     props.status
       ? props.status === "wait"

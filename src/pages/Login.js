@@ -6,10 +6,9 @@ import {
   TitleText,
   Me,
   IG,
-  InputGroup,
-  Input,
-  QueueText,
-  Button,
+  Section,
+  BodyText,
+  Time,
 } from "../Style";
 import LoginBtn from "../Components/LoginBtn";
 import firebase, { auth, firestore } from "../firebase";
@@ -20,6 +19,7 @@ function Login() {
   const history = useHistory();
   const [cookies, setCookies] = useCookies(["_login"]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   const CreateUser = async (user) => {
     setIsLoading(true);
@@ -49,7 +49,7 @@ function Login() {
         } else {
           auth()
             .signOut()
-            .then(() => alert("ใช้อีเมลโรงเรียนเท่านั้น"));
+            .then(() => setError(true));
         }
       }
     });
@@ -63,7 +63,7 @@ function Login() {
             SMTE
           </TitleText>
           <TitleText weight="bolder" color="#83C5BE">
-            SmartPrint
+            PrintAnywhere
           </TitleText>
           <Group direction="row">
             <Me color="#08090A">by </Me>
@@ -71,6 +71,14 @@ function Login() {
               _cho_kun_
             </IG>
           </Group>
+
+          {error && (
+            <Section>
+              <BodyText color="red" weight={500}>
+                ใช้อีเมลโรงเรียนเท่านั้น
+              </BodyText>
+            </Section>
+          )}
         </Group>
         <LoginBtn />
       </Container>
