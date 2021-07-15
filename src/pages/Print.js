@@ -17,6 +17,7 @@ import {
   PdfPage,
   ArrowBtn,
   Icon,
+  RadioText,
 } from "../Style";
 // import { Document, Page } from "react-pdf/dist/esm/entry.webpack";
 import { Document, Page } from "react-pdf/dist/esm/entry.webpack";
@@ -35,7 +36,7 @@ function Print() {
   const [filePage, setFilePage] = useState(1);
   const [fileAllPage, setFileAllPage] = useState(null);
   const [details, setDetails] = useState({
-    range: "",
+    range: null,
     pages: "all",
     type: "A4",
     printform: "border",
@@ -43,10 +44,6 @@ function Print() {
       .toString()
       .padStart(2, 0)}:${new Date().getMinutes().toString().padStart(2, 0)}`,
   });
-
-  useEffect(() => {
-    console.log(details);
-  }, [details]);
 
   const [empty, setEmpty] = useState(false);
   const [isMobile, setisMobile] = useState("mobile");
@@ -67,13 +64,14 @@ function Print() {
     //Validate
     if (
       (details.pages === "choose" && details.range === "") ||
-      details.timetoget === ""
+      details.timetoget === "" ||
+      file === null
     ) {
       setEmpty(true);
     } else {
       setEmpty(false);
     }
-  }, [details]);
+  }, [details, file]);
 
   //Device Check
   useEffect(() => {
@@ -87,6 +85,13 @@ function Print() {
 
   const handleFileUpload = (e) => {
     const pdf = e.target.files[0];
+
+    if (pdf.type !== "application/pdf") {
+      alert("ไม่รองรับไฟล์นี้");
+      setFile(null);
+      setPreviewPDF(undefined);
+      return;
+    }
     setFile(pdf);
 
     const Reader = new FileReader();
@@ -107,19 +112,22 @@ function Print() {
 
   const PrintOrder = async () => {
     setIsLoading(true);
+
     //Upload File To Storage
     const whereToStore = storage().ref("Works/");
-    const FileNameSchema = `${uuidV4()}.pdf`;
+    const FileNameSchema = `${uuidV4()}`;
     const fileName = whereToStore.child(FileNameSchema);
     await fileName.put(file);
     const filePath = await fileName.getDownloadURL();
+
+    const fileType = await fileName.getMetadata();
 
     // Add time to queue
     const TimeToGet = new Date();
     const formTime = details.timetoget.split(":");
     TimeToGet.setHours(formTime[0], formTime[1]);
 
-    //Create Reference to firestore
+    // //Create Reference to firestore
     const docRef = uuidV4();
     firestore()
       .collection("users")
@@ -149,8 +157,8 @@ function Print() {
     await firestore()
       .collection("users")
       .doc(user.uid)
-      .update({ quota: firestore.FieldValue.increment(-1) });
-    removeQuota();
+      .update({ quota: user.quota - 1 });
+
     setIsLoading(false);
     history.push("/success");
   };
@@ -188,7 +196,7 @@ function Print() {
                   type="file"
                   style={{ display: "none" }}
                   id="fileupload"
-                  accept=".pdf"
+                  accept="application/pdf"
                   onChange={handleFileUpload}
                 />
               </FileUpload>
@@ -199,6 +207,13 @@ function Print() {
                     renderMode="canvas"
                     file={previewPDF}
                     onLoadSuccess={({ numPages }) => setFileAllPage(numPages)}
+                    onLoadError={(err) => {
+                      if (err) {
+                        alert("ไม่รองรับไฟล์นี้");
+                        setFile(null);
+                        setPreviewPDF(undefined);
+                      }
+                    }}
                   >
                     <Page
                       pageNumber={filePage}
@@ -239,9 +254,13 @@ function Print() {
                 type="radio"
                 name="page"
                 value="all"
+                id="allpage"
                 defaultChecked
               />
-                <BodyText weight={600}>ทุกหน้า</BodyText>
+               {" "}
+              <RadioText htmlFor="allpage" weight={600}>
+                ทุกหน้า
+              </RadioText>
             </Group>
             <Group direction="row" justify="flex-start" align="center" gap={14}>
               <input
@@ -250,11 +269,14 @@ function Print() {
                 }
                 type="radio"
                 name="page"
+                id="choosepage"
                 value="choose"
               />
 
               {details.pages !== "choose" ? (
-                <BodyText weight={600}>เลือกหน้า</BodyText>
+                <RadioText htmlFor="choosepage" weight={600}>
+                  เลือกหน้า
+                </RadioText>
               ) : (
                 <Group
                   direction="column"
@@ -268,12 +290,12 @@ function Print() {
                       // error={details.pages === "choose" && details.range === ""}
                       type="text"
                       value={details.range}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setDetails((prev) => ({
                           ...prev,
                           range: e.target.value,
-                        }))
-                      }
+                        }));
+                      }}
                       placeholder="1 , 1-3"
                       type="text"
                     />
@@ -297,20 +319,28 @@ function Print() {
                 }
                 name="type"
                 value="A4"
+                id="a4type"
                 defaultChecked
               />
-                <BodyText weight={600}>A4 ธรรมดา</BodyText>
+               {" "}
+              <RadioText htmlFor="a4type" weight={600}>
+                A4 ธรรมดา
+              </RadioText>
             </Group>
             <Group direction="row" justify="flex-start" align="center" gap={5}>
               <input
                 type="radio"
                 value="100pound"
+                id="100poundtype"
                 onChange={(e) =>
                   setDetails((prev) => ({ ...prev, type: e.target.value }))
                 }
                 name="type"
               />
-                <BodyText weight={600}>กระดาษปก</BodyText>
+               {" "}
+              <RadioText htmlFor="100poundtype" weight={600}>
+                กระดาษปก
+              </RadioText>
             </Group>
           </form>
         </Section>
@@ -326,9 +356,13 @@ function Print() {
                 }
                 name="printform"
                 value="border"
+                id="border"
                 defaultChecked
               />
-                <BodyText weight={600}>มีขอบ</BodyText>
+               {" "}
+              <RadioText htmlFor="border" weight={600}>
+                มีขอบ
+              </RadioText>
             </Group>
             <Group direction="row" justify="flex-start" align="center" gap={5}>
               <input
@@ -338,8 +372,12 @@ function Print() {
                 }
                 name="printform"
                 value="borderless"
+                id="borderless"
               />
-                <BodyText weight={600}>ไร้ขอบ</BodyText>
+               {" "}
+              <RadioText htmlFor="borderless" weight={600}>
+                ไร้ขอบ
+              </RadioText>
             </Group>
           </form>
         </Section>

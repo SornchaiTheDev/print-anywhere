@@ -45,9 +45,18 @@ function Home() {
 
   const getUser = async (uid) => {
     setIsLoading(true);
-    const doc = await firestore().collection("users").doc(uid).get();
-    setUser((prev) => ({ ...prev, ...doc.data() }));
-    setQuota(doc.data().quota);
+    await firestore()
+      .collection("users")
+      .doc(uid)
+      .onSnapshot(
+        (snapshot) => (
+          setQuota(snapshot.data().quota),
+          setUser((prev) => ({
+            ...prev,
+            ...snapshot.data(),
+          }))
+        )
+      );
 
     setIsLoading(false);
   };

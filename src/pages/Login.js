@@ -18,7 +18,7 @@ import { useCookies } from "react-cookie";
 function Login() {
   const history = useHistory();
   const [cookies, setCookies] = useCookies(["_login"]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
   const CreateUser = async (user) => {
@@ -40,6 +40,7 @@ function Login() {
       history.replace("/home");
     }
     auth().onAuthStateChanged((user) => {
+      setIsLoading(false);
       if (user !== null) {
         const email = user.email;
         const isPKW = /@pkw.ac.th/g.test(email);
@@ -73,13 +74,13 @@ function Login() {
           </Group>
 
           {error && (
-            <Section>
-              <BodyText color="red" weight={500}>
-                ใช้อีเมลโรงเรียนเท่านั้น
-              </BodyText>
-            </Section>
+            
+            <BodyText color="red" weight={500} style={{marginTop : 20}}>
+              ใช้อีเมลโรงเรียนเท่านั้น
+            </BodyText>
           )}
         </Group>
+
         <LoginBtn />
       </Container>
     </>

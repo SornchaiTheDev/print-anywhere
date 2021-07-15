@@ -34,6 +34,14 @@ export const SubText = styled.h2`
   font-family: Athiti;
   font-weight: ${(props) => (props.weight ? props.weight : "normal")};
 `;
+export const RadioText = styled.label`
+  font-size: ${(props) => (props.size ? props.size : 1.25)}rem;
+  margin-top: ${(props) => (props.marginTop ? props.marginTop : 0)}px;
+  color: ${(props) => (props.color ? props.color : "#08090A")};
+  font-family: Athiti;
+  font-weight: ${(props) => (props.weight ? props.weight : "normal")};
+  word-wrap: break-word;
+`;
 export const BodyText = styled.h2`
   font-size: ${(props) => (props.size ? props.size : 1.25)}rem;
   margin-top: ${(props) => (props.marginTop ? props.marginTop : 0)}px;
