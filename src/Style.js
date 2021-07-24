@@ -309,6 +309,7 @@ export const ArrowBtn = styled.button`
 `;
 
 export const Icon = styled.div`
+  cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;

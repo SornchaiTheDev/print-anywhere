@@ -26,12 +26,21 @@ function Login() {
     setCookies("_login", "logined", { path: "/" });
     const getUser = await firestore().collection("users").doc(user.uid).get();
     if (!getUser.exists) {
-      await firestore().collection("users").doc(user.uid).set({
-        name: user.displayName,
-        quota: 10,
-      });
-    }
+      const now = await firestore().collection("users").doc("counting").get();
 
+      await firestore()
+        .collection("users")
+        .doc(user.uid)
+        .set({
+          name: user.displayName,
+          quota: 10,
+          rank: now.data().amount + 1,
+        });
+      await firestore()
+        .collection("users")
+        .doc("counting")
+        .update({ amount: firestore.FieldValue.increment(1) });
+    }
     setIsLoading(false);
     history.replace("/home");
   };
@@ -68,14 +77,17 @@ function Login() {
           </TitleText>
           <Group direction="row">
             <Me color="#08090A">by </Me>
-            <IG color="#FE7F2D" href="https://instagram.com/_cho_kun_">
+            <IG
+              color="#FE7F2D"
+              target="_blank"
+              href="https://instagram.com/_cho_kun_"
+            >
               _cho_kun_
             </IG>
           </Group>
 
           {error && (
-            
-            <BodyText color="red" weight={500} style={{marginTop : 20}}>
+            <BodyText color="red" weight={500} style={{ marginTop: 20 }}>
               ใช้อีเมลโรงเรียนเท่านั้น
             </BodyText>
           )}

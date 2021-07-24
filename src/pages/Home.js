@@ -18,7 +18,7 @@ import {
   WorkStatusText,
 } from "../Style";
 import { GoSignOut } from "react-icons/go";
-import { AiFillFilePdf, AiFillFileImage } from "react-icons/ai";
+import { AiFillDelete } from "react-icons/ai";
 
 import Loading from "../Components/Loading";
 import { auth, firestore } from "../firebase";
@@ -83,6 +83,7 @@ function Home() {
       if (user !== null) {
         getWork(user.uid);
         getUser(user.uid);
+        setUser(user);
       }
     });
   }, []);
@@ -94,6 +95,56 @@ function Home() {
     }
     if (user !== null && user.quota > 0) setIsOutOfQuota(false);
   }, [user]);
+
+  const WorkComponent = ({ fileName, status, index, doc }) => {
+    const Remove = () => {
+      if (status === "success") {
+        firestore()
+          .collection("users")
+          .doc(user.uid)
+          .collection("works")
+          .doc(doc)
+          .delete();
+      }
+    };
+    return (
+      <Group
+        direction="row"
+        justify="space-between"
+        align="center"
+        width="100%"
+      >
+        <Group direction="row" justify="flex-start" align="center" width="100%">
+          <Group
+            direction="row"
+            justify="flex-start"
+            align="center"
+            width="100%"
+          >
+            <BodyText weight={500}>{index + 1}.</BodyText>
+
+            <BodyText weight={500}>
+              {fileName.slice(0, 20)} {fileName.length > 20 && "..."}
+            </BodyText>
+          </Group>
+          <WorkStatus status={status}>
+            <WorkStatusText>
+              {status === "wait"
+                ? "กำลังปริ้นท์"
+                : status === "inqueue"
+                ? "รอคิว"
+                : "ไปรับได้เลย"}
+            </WorkStatusText>
+          </WorkStatus>
+          {status === "success" && (
+            <Icon size={1.5} onClick={Remove}>
+              <AiFillDelete />
+            </Icon>
+          )}
+        </Group>
+      </Group>
+    );
+  };
 
   return (
     <>
@@ -131,43 +182,14 @@ function Home() {
           </Group>
           <WorkShowCase>
             {works.length > 0 ? (
-              works.map(({ fileName, status }, index) => (
-                <Group
-                  direction="row"
-                  justify="space-between"
-                  align="center"
-                  width="100%"
+              works.map(({ fileName, status, id }, index) => (
+                <WorkComponent
+                  doc={id}
+                  fileName={fileName}
+                  status={status}
+                  index={index}
                   key={index}
-                >
-                  <Group
-                    direction="row"
-                    justify="flex-start"
-                    align="center"
-                    width="100%"
-                  >
-                    <Group
-                      direction="row"
-                      justify="flex-start"
-                      align="center"
-                      width="100%"
-                    >
-                      <BodyText weight={500}>{index + 1}.</BodyText>
-
-                      <BodyText weight={500}>
-                        {fileName.slice(0, 20)} {fileName.length > 20 && "..."}
-                      </BodyText>
-                    </Group>
-                    <WorkStatus status={status}>
-                      <WorkStatusText>
-                        {status === "wait"
-                          ? "กำลังปริ้นท์"
-                          : status === "inqueue"
-                          ? "รอคิว"
-                          : "ไปรับได้เลย"}
-                      </WorkStatusText>
-                    </WorkStatus>
-                  </Group>
-                </Group>
+                />
               ))
             ) : (
               <SubText>ยังไม่มีงาน</SubText>

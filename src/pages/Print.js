@@ -24,6 +24,7 @@ import { Document, Page } from "react-pdf/dist/esm/entry.webpack";
 
 import { FaArrowLeft, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import { HiUpload } from "react-icons/hi";
+import { GiCancel } from "react-icons/gi";
 import { firestore, storage } from "../firebase";
 import Loading from "../Components/Loading";
 import { useUser } from "../Context";
@@ -36,7 +37,7 @@ function Print() {
   const [filePage, setFilePage] = useState(1);
   const [fileAllPage, setFileAllPage] = useState(null);
   const [details, setDetails] = useState({
-    range: null,
+    range: "",
     pages: "all",
     type: "A4",
     printform: "border",
@@ -45,7 +46,7 @@ function Print() {
       .padStart(2, 0)}:${new Date().getMinutes().toString().padStart(2, 0)}`,
   });
 
-  const [empty, setEmpty] = useState(false);
+  const [empty, setEmpty] = useState(true);
   const [isMobile, setisMobile] = useState("mobile");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,6 +58,10 @@ function Print() {
   };
 
   useEffect(() => {
+    if (user !== null && user.quota === 0 && empty) {
+      alert("ไม่มีโควต้าเหลือแล้ว");
+      history.replace("/home");
+    }
     if (user === null) history.replace("/home");
   }, [user]);
 
@@ -64,6 +69,7 @@ function Print() {
     //Validate
     if (
       (details.pages === "choose" && details.range === "") ||
+      (user !== null && details.pages === "all" && fileAllPage > user.quota) ||
       details.timetoget === "" ||
       file === null
     ) {
@@ -71,7 +77,7 @@ function Print() {
     } else {
       setEmpty(false);
     }
-  }, [details, file]);
+  }, [details, file, fileAllPage]);
 
   //Device Check
   useEffect(() => {
@@ -112,8 +118,29 @@ function Print() {
 
   const PrintOrder = async () => {
     setIsLoading(true);
+    //Choose Page Check
+    const pageAmount = details.range;
+    let amount = 0;
 
-    //Upload File To Storage
+    if (details.pages === "all") {
+      amount = fileAllPage;
+    }
+
+    if (/[-]/g.test(pageAmount)) {
+      alert("ใช้ , เลือกหน้าเท่านั้น");
+      setIsLoading(false);
+      return;
+    }
+    if (/,/g.test(pageAmount)) {
+      const pageRange = pageAmount.split(",");
+      if (pageRange.some((page) => page === "")) pageRange.pop();
+
+      amount = pageRange.length;
+    } else if (/\d/g.test(pageAmount)) {
+      amount = 1;
+    }
+
+    // Upload File To Storage
     const whereToStore = storage().ref("Works/");
     const FileNameSchema = `${uuidV4()}`;
     const fileName = whereToStore.child(FileNameSchema);
@@ -157,7 +184,7 @@ function Print() {
     await firestore()
       .collection("users")
       .doc(user.uid)
-      .update({ quota: user.quota - 1 });
+      .update({ quota: firestore.FieldValue.increment(-amount) });
 
     setIsLoading(false);
     history.push("/success");
@@ -222,6 +249,7 @@ function Print() {
                     />
                   </Document>
                 </PdfBorder>
+
                 <PdfPage>
                   <ArrowBtn
                     marginTop={10}
@@ -296,7 +324,7 @@ function Print() {
                           range: e.target.value,
                         }));
                       }}
-                      placeholder="1 , 1-3"
+                      placeholder="1 , 2"
                       type="text"
                     />
                   </Group>
