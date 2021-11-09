@@ -194,9 +194,11 @@ function Print() {
     const year = new Date().getFullYear();
     const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
     const date = new Date().getDate().toString().padStart(2, "0");
-    const now = new Date(Date.now()).setSeconds(0, 0);
+    let now = new Date(Date.now()).setSeconds(0, 0);
     const template = `${year}-${month}-${date}T${e.target.value}:00`;
     const selected = new Date(template).getTime();
+    if (new Date(now).getHours() > 21)
+      now = new Date(now).setDate(new Date(now).getDate() + 1);
 
     if ((selected - now) / 1000 / 3600 < 2) {
       setDetails((prev) => ({ ...prev, timetoget: "" }));
@@ -245,26 +247,49 @@ function Print() {
               </FileUpload>
             ) : (
               <PdfViewer>
-                <PdfBorder>
-                  <Document
-                    renderMode="canvas"
-                    file={previewPDF}
-                    onLoadSuccess={({ numPages }) => setFileAllPage(numPages)}
-                    onLoadError={(err) => {
-                      if (err) {
-                        alert("ไม่รองรับไฟล์นี้");
-                        setFile(null);
-                        setPreviewPDF(undefined);
-                      }
+                <div style={{ position: "relative" }}>
+                  <button
+                    onClick={() => (setFile(null), setPreviewPDF(undefined))}
+                    style={{
+                      outline: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      zIndex: 9999,
+                      position: "absolute",
+                      right: -20,
+                      top: -15,
+                      width: 48,
+                      height: 48,
+                      background: "red",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      borderRadius: "100%",
                     }}
                   >
-                    <Page
-                      pageNumber={filePage}
-                      width={isMobile ? 300 : 400}
-                      // height={300}
-                    />
-                  </Document>
-                </PdfBorder>
+                    <GiCancel color="white" size="1.25em" />
+                  </button>
+                  <PdfBorder>
+                    <Document
+                      renderMode="canvas"
+                      file={previewPDF}
+                      onLoadSuccess={({ numPages }) => setFileAllPage(numPages)}
+                      onLoadError={(err) => {
+                        if (err) {
+                          alert("ไม่รองรับไฟล์นี้");
+                          setFile(null);
+                          setPreviewPDF(undefined);
+                        }
+                      }}
+                    >
+                      <Page
+                        pageNumber={filePage}
+                        width={isMobile ? 300 : 400}
+                        // height={300}
+                      />
+                    </Document>
+                  </PdfBorder>
+                </div>
 
                 <PdfPage>
                   <ArrowBtn
@@ -445,7 +470,7 @@ function Print() {
           </form>
         </Section>
         <PrintButton disabled={empty} onClick={PrintOrder}>
-          ตกลง {details.timetoget.toString()}
+          ตกลง
         </PrintButton>
       </HomeContainer>
     </>
