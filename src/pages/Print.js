@@ -41,12 +41,11 @@ function Print() {
     pages: "all",
     type: "A4",
     printform: "border",
-    timetoget: `${(new Date().getHours() + 2)
-      .toString()
-      .padStart(2, 0)}:${new Date().getMinutes().toString().padStart(2, 0)}`,
+    timetoget: "",
   });
 
   const [empty, setEmpty] = useState(true);
+  const [timeErr, setTimeErr] = useState(false);
   const [isMobile, setisMobile] = useState("mobile");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -188,6 +187,23 @@ function Print() {
 
     setIsLoading(false);
     history.push("/success");
+  };
+
+  const timeSelected = (e) => {
+    setTimeErr(false);
+    const year = new Date().getFullYear();
+    const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
+    const date = new Date().getDate().toString().padStart(2, "0");
+    const now = new Date(Date.now()).setSeconds(0, 0);
+    const template = `${year}-${month}-${date}T${e.target.value}:00`;
+    const selected = new Date(template).getTime();
+
+    if ((selected - now) / 1000 / 3600 < 2) {
+      setDetails((prev) => ({ ...prev, timetoget: "" }));
+      return setTimeErr(true);
+    }
+
+    return setDetails((prev) => ({ ...prev, timetoget: e.target.value }));
   };
 
   return (
@@ -413,23 +429,23 @@ function Print() {
 
         <Section>
           <BodyText weight={500}>
-            เวลามารับเอกสาร (อย่างน้อย 2 ชั่วโมง)
+            เวลามารับเอกสาร (อย่างน้อย 2 ชั่วโมง ){" "}
+            <span style={{ color: "red" }}>*ตอนนี้ยังสั่งข้ามวันไม่ได้นะ</span>
           </BodyText>
           <form>
             <div style={{ width: 200, marginTop: 20 }}>
               <Input
-                // error={details.timetoget === ""}
+                error={timeErr && empty}
                 type="time"
                 value={details.timetoget}
-                onChange={(e) =>
-                  setDetails((prev) => ({ ...prev, timetoget: e.target.value }))
-                }
+                onChange={timeSelected}
+                style={{ minHeight: "2em" }}
               />
             </div>
           </form>
         </Section>
         <PrintButton disabled={empty} onClick={PrintOrder}>
-          ตกลง
+          ตกลง {details.timetoget.toString()}
         </PrintButton>
       </HomeContainer>
     </>
