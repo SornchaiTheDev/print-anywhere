@@ -37,7 +37,7 @@ function Print() {
   const [filePage, setFilePage] = useState(1);
   const [fileAllPage, setFileAllPage] = useState(null);
   const [details, setDetails] = useState({
-    class: "ม.1",
+    classes: "ม.1",
     range: "",
     pages: "all",
     type: "A4",
@@ -320,9 +320,9 @@ function Print() {
         <Section>
           <BodyText weight={500}>ชั้น</BodyText>
           <select
-            value={details.class}
+            value={details.classes}
             onChange={(e) =>
-              setDetails((prev) => ({ ...prev, class: e.target.value }))
+              setDetails((prev) => ({ ...prev, classes: e.target.value }))
             }
             style={{
               marginTop: 10,
