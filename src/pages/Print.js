@@ -37,6 +37,7 @@ function Print() {
   const [filePage, setFilePage] = useState(1);
   const [fileAllPage, setFileAllPage] = useState(null);
   const [details, setDetails] = useState({
+    class: "ม.1",
     range: "",
     pages: "all",
     type: "A4",
@@ -208,6 +209,10 @@ function Print() {
     return setDetails((prev) => ({ ...prev, timetoget: e.target.value }));
   };
 
+  useEffect(() => {
+    console.log(details);
+  }, [details]);
+
   return (
     <>
       {isLoading && <Loading />}
@@ -312,6 +317,30 @@ function Print() {
             )}
           </Group>
         </Section>
+        <Section>
+          <BodyText weight={500}>ชั้น</BodyText>
+          <select
+            value={details.class}
+            onChange={(e) =>
+              setDetails((prev) => ({ ...prev, class: e.target.value }))
+            }
+            style={{
+              marginTop: 10,
+              padding: 6,
+              fontFamily: "Athiti",
+              fontWeight: 600,
+            }}
+          >
+            <option>ม.1</option>
+            <option>ม.2</option>
+            <option>ม.3</option>
+            <option>ม.4</option>
+            <option>ม.5</option>
+            <option>ม.6</option>
+          </select>
+        </Section>
+        <Divider />
+
         <Section>
           <BodyText weight={500}>จำนวนหน้า</BodyText>
           <form>
