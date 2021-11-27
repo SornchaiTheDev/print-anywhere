@@ -190,12 +190,22 @@ function Print() {
     history.push("/success");
   };
 
-  const timeSelected = (e) => {
+  const getNow = async () => {
+    let fetching = await fetch(
+      "http://worldtimeapi.org/api/timezone/Asia/Bangkok"
+    );
+    const now = await fetching.json();
+    return now;
+  };
+
+  const timeSelected = async (e) => {
     setTimeErr(false);
     const year = new Date().getFullYear();
     const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
     const date = new Date().getDate().toString().padStart(2, "0");
-    let now = new Date(Date.now()).setSeconds(0, 0);
+    let nowUnix = await getNow();
+
+    let now = new Date(nowUnix.unixtime * 1000).setSeconds(0, 0);
     const template = `${year}-${month}-${date}T${e.target.value}:00`;
     const selected = new Date(template).getTime();
     if (new Date(now).getHours() > 21)
@@ -209,9 +219,6 @@ function Print() {
     return setDetails((prev) => ({ ...prev, timetoget: e.target.value }));
   };
 
-  useEffect(() => {
-    console.log(details);
-  }, [details]);
 
   return (
     <>
