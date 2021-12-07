@@ -63,9 +63,8 @@ function Print() {
   const getNow = async () => {
     try {
       let now = await axios.get(
-        "http://worldtimeapi.org/api/timezone/Asia/Bangkok"
+        "https://worldtimeapi.org/api/timezone/Asia/Bangkok"
       );
-console.log(now.data)
       setNowUnix(now.data);
     } catch {}
   };
@@ -221,7 +220,7 @@ console.log(now.data)
     const template = `${year}-${month}-${date}T${timetoget}:00`;
     const selected = new Date(template).getTime();
 
-    let now = new Date(nowUnix.dateTime).setSeconds(0, 0);
+    let now = new Date(nowUnix.unixtime * 1000).setSeconds(0, 0);
 
     if (new Date(now).getHours() > 21)
       now = new Date(now).setDate(new Date(now).getDate() + 1);
@@ -519,7 +518,6 @@ console.log(now.data)
           <form>
             <div style={{ width: 200, marginTop: 20 }}>
               <Input
-                disabled={nowUnix === null}
                 error={timeErr && empty}
                 type="time"
                 value={details.timetoget}
