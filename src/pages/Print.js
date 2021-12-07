@@ -42,7 +42,13 @@ function Print() {
     pages: "all",
     type: "A4",
     printform: "border",
-    timetoget: "",
+    timetoget: `${new Date()
+      .getHours()
+      .toString()
+      .padStart(2, "0")}:${new Date()
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`,
   });
 
   const [empty, setEmpty] = useState(true);
