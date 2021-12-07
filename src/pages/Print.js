@@ -49,8 +49,21 @@ function Print() {
   const [timeErr, setTimeErr] = useState(false);
   const [isMobile, setisMobile] = useState("mobile");
   const [isLoading, setIsLoading] = useState(false);
+  const [nowUnix, setNowUnix] = useState(null);
 
   const { user, removeQuota } = useUser();
+
+  const getNow = async () => {
+    let fetching = await fetch(
+      "http://worldtimeapi.org/api/timezone/Asia/Bangkok"
+    );
+    const now = await fetching.json();
+    setNowUnix(now);
+  };
+
+  useEffect(() => {
+    getNow();
+  }, []);
 
   const fileUpload = () => {
     const upload = document.getElementById("fileupload");
@@ -190,35 +203,30 @@ function Print() {
     history.push("/success");
   };
 
-  const getNow = async () => {
-    let fetching = await fetch(
-      "http://worldtimeapi.org/api/timezone/Asia/Bangkok"
-    );
-    const now = await fetching.json();
-    return now;
-  };
-
   const timeSelected = async (e) => {
     setTimeErr(false);
+    const timetoget = e.target.value;
     const year = new Date().getFullYear();
     const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
     const date = new Date().getDate().toString().padStart(2, "0");
-    let nowUnix = await getNow();
+    const template = `${year}-${month}-${date}T${timetoget}:00`;
+    const selected = new Date(template).getTime();
 
     let now = new Date(nowUnix.unixtime * 1000).setSeconds(0, 0);
-    const template = `${year}-${month}-${date}T${e.target.value}:00`;
-    const selected = new Date(template).getTime();
+
     if (new Date(now).getHours() > 21)
       now = new Date(now).setDate(new Date(now).getDate() + 1);
 
     if ((selected - now) / 1000 / 3600 < 2) {
-      setDetails((prev) => ({ ...prev, timetoget: "" }));
+      setDetails((prev) => ({
+        ...prev,
+        timetoget: "",
+      }));
       return setTimeErr(true);
     }
 
-    return setDetails((prev) => ({ ...prev, timetoget: e.target.value }));
+    return setDetails((prev) => ({ ...prev, timetoget: timetoget }));
   };
-
 
   return (
     <>
@@ -499,7 +507,7 @@ function Print() {
                 error={timeErr && empty}
                 type="time"
                 value={details.timetoget}
-                onChange={timeSelected}
+                onChange={(e) => timeSelected(e)}
                 style={{ minHeight: "2em" }}
               />
             </div>
