@@ -51,11 +51,11 @@ function Print() {
   const [isLoading, setIsLoading] = useState(false);
   const [nowUnix, setNowUnix] = useState(null);
 
-  const { user, removeQuota } = useUser();
+  const { user } = useUser();
 
   const getNow = async () => {
     let fetching = await fetch(
-      "http://worldtimeapi.org/api/timezone/Asia/Bangkok"
+      "https://worldtimeapi.org/api/timezone/Asia/Bangkok"
     );
     const now = await fetching.json();
     setNowUnix(now);
@@ -217,7 +217,16 @@ function Print() {
     if (new Date(now).getHours() > 21)
       now = new Date(now).setDate(new Date(now).getDate() + 1);
 
-    if ((selected - now) / 1000 / 3600 < 2) {
+    // 2 Hours Wait
+    // if ((selected - now) / 1000 / 3600 < 2) {
+    //   setDetails((prev) => ({
+    //     ...prev,
+    //     timetoget: "",
+    //   }));
+    //   return setTimeErr(true);
+    // }
+
+    if (selected - now < 0) {
       setDetails((prev) => ({
         ...prev,
         timetoget: "",
@@ -497,10 +506,7 @@ function Print() {
         <Divider />
 
         <Section>
-          <BodyText weight={500}>
-            เวลามารับเอกสาร (อย่างน้อย 2 ชั่วโมง ){" "}
-            <span style={{ color: "red" }}>*ตอนนี้ยังสั่งข้ามวันไม่ได้นะ</span>
-          </BodyText>
+          <BodyText weight={500}>เวลามารับเอกสาร</BodyText>
           <form>
             <div style={{ width: 200, marginTop: 20 }}>
               <Input
