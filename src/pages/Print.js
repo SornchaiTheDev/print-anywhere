@@ -29,6 +29,7 @@ import { firestore, storage } from "../firebase";
 import Loading from "../Components/Loading";
 import { useUser } from "../Context";
 import { v4 as uuidV4 } from "uuid";
+import axios from "axios";
 
 function Print() {
   const history = useHistory();
@@ -60,11 +61,13 @@ function Print() {
   const { user } = useUser();
 
   const getNow = async () => {
-    let fetching = await fetch(
-      "https://worldtimeapi.org/api/timezone/Asia/Bangkok"
-    );
-    const now = await fetching.json();
-    setNowUnix(now);
+    try {
+      let now = await axios.get(
+        "http://worldtimeapi.org/api/timezone/Asia/Bangkok"
+      );
+console.log(now.data)
+      setNowUnix(now.data);
+    } catch {}
   };
 
   useEffect(() => {
@@ -218,7 +221,7 @@ function Print() {
     const template = `${year}-${month}-${date}T${timetoget}:00`;
     const selected = new Date(template).getTime();
 
-    let now = new Date(nowUnix.unixtime * 1000).setSeconds(0, 0);
+    let now = new Date(nowUnix.dateTime).setSeconds(0, 0);
 
     if (new Date(now).getHours() > 21)
       now = new Date(now).setDate(new Date(now).getDate() + 1);
