@@ -516,6 +516,7 @@ function Print() {
           <form>
             <div style={{ width: 200, marginTop: 20 }}>
               <Input
+                disabled={nowUnix === null}
                 error={timeErr && empty}
                 type="time"
                 value={details.timetoget}
