@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useHistory, useParams } from "react-router";
+import { useHistory } from "react-router";
 import {
   HomeContainer,
   TitleText,
@@ -43,13 +43,6 @@ function Print() {
     pages: "all",
     type: "A4",
     printform: "border",
-    timetoget: `${new Date()
-      .getHours()
-      .toString()
-      .padStart(2, "0")}:${new Date()
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}`,
   });
 
   const [empty, setEmpty] = useState(true);
@@ -60,23 +53,11 @@ function Print() {
 
   const { user } = useUser();
 
-  const getNow = async () => {
-    try {
-      let now = await axios.get(
-        "https://worldtimeapi.org/api/timezone/Asia/Bangkok"
-      );
-      setNowUnix(now.data);
-    } catch {}
-  };
-
-  useEffect(() => {
-    getNow();
-  }, []);
-
   const fileUpload = () => {
     const upload = document.getElementById("fileupload");
     upload.click();
   };
+  
 
   useEffect(() => {
     if (user !== null && user.quota === 0 && empty) {
@@ -91,7 +72,6 @@ function Print() {
     if (
       (details.pages === "choose" && details.range === "") ||
       (user !== null && details.pages === "all" && fileAllPage > user.quota) ||
-      details.timetoget === "" ||
       file === null
     ) {
       setEmpty(true);
@@ -168,14 +148,7 @@ function Print() {
     await fileName.put(file);
     const filePath = await fileName.getDownloadURL();
 
-    const fileType = await fileName.getMetadata();
-
-    // Add time to queue
-    const TimeToGet = new Date();
-    const formTime = details.timetoget.split(":");
-    TimeToGet.setHours(formTime[0], formTime[1]);
-
-    // //Create Reference to firestore
+    //Create Reference to firestore
     const docRef = uuidV4();
     firestore()
       .collection("users")
@@ -198,7 +171,7 @@ function Print() {
       ownerDoc: user.uid,
       details: details,
       fileName: file.name,
-      orderTime: TimeToGet,
+      orderTime: firestore.FieldValue.serverTimestamp(),
     });
     //Remove Quota
 
@@ -209,40 +182,6 @@ function Print() {
 
     setIsLoading(false);
     history.push("/success");
-  };
-
-  const timeSelected = async (e) => {
-    setTimeErr(false);
-    const timetoget = e.target.value;
-    const year = new Date().getFullYear();
-    const month = (new Date().getMonth() + 1).toString().padStart(2, "0");
-    const date = new Date().getDate().toString().padStart(2, "0");
-    const template = `${year}-${month}-${date}T${timetoget}:00`;
-    const selected = new Date(template).getTime();
-
-    let now = new Date(nowUnix.unixtime * 1000).setSeconds(0, 0);
-
-    if (new Date(now).getHours() > 21)
-      now = new Date(now).setDate(new Date(now).getDate() + 1);
-
-    // 2 Hours Wait
-    // if ((selected - now) / 1000 / 3600 < 2) {
-    //   setDetails((prev) => ({
-    //     ...prev,
-    //     timetoget: "",
-    //   }));
-    //   return setTimeErr(true);
-    // }
-
-    if (selected - now < 0) {
-      setDetails((prev) => ({
-        ...prev,
-        timetoget: "",
-      }));
-      return setTimeErr(true);
-    }
-
-    return setDetails((prev) => ({ ...prev, timetoget: timetoget }));
   };
 
   return (
@@ -291,7 +230,7 @@ function Print() {
                       outline: "none",
                       border: "none",
                       cursor: "pointer",
-                      zIndex: 9999,
+                      zIndex: 10,
                       position: "absolute",
                       right: -20,
                       top: -15,
@@ -513,7 +452,7 @@ function Print() {
         </Section>
         <Divider />
 
-        <Section>
+        {/* <Section>
           <BodyText weight={500}>เวลามารับเอกสาร</BodyText>
           <form>
             <div style={{ width: 200, marginTop: 20 }}>
@@ -526,7 +465,7 @@ function Print() {
               />
             </div>
           </form>
-        </Section>
+        </Section> */}
         <PrintButton disabled={empty} onClick={PrintOrder}>
           ตกลง
         </PrintButton>
